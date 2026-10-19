@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Dictionnaire FR-EN</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 15px;
+    color: #222;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  h1 { text-align: center; margin: 0 0 15px; font-size: 22px; }
+  .inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: #3498db; }
+  .btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  button {
+    padding: 11px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    font-family: inherit;
+  }
+  button:active { transform: scale(0.97); }
+  .add { background: #2ecc71; }
+  .del { background: #e74c3c; }
+  .exp { background: #9b59b6; }
+  .quiz { background: #3498db; }
+  .search {
+    margin-bottom: 12px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: #2c3e50;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    font-size: 13px;
+  }
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #e0e6ed;
+  }
+  tr:hover { background: #f8f9fa; }
+  .star { cursor: pointer; font-size: 18px; user-select: none; }
+  .star.on { color: #f1c40f; }
+  .star.off { color: #ccc; }
+  .speak { background: none; border: none; color: #3498db; cursor: pointer; font-size: 15px; padding: 0 5px; }
+  .count { font-size: 13px; color: #7f8c8d; text-align: right; margin-bottom: 8px; }
+
+  /* Quiz */
+  .quiz-box {
+    display: none;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 15px;
+  }
+  .quiz-box.on { display: block; }
+  .question {
+    font-size: 26px;
+    font-weight: 700;
+    color: #3498db;
+    margin: 15px 0;
+    min-height: 35px;
+  }
+  .quiz-input {
+    max-width: 350px;
+    margin: 0 auto 12px;
+    display: block;
+    text-align: center;
+    font-size: 16px;
+  }
+  .feedback {
+    font-size: 16px;
+    font-weight: 600;
+    min-height: 24px;
+    margin: 10px 0;
+  }
+  .feedback.ok { color: #2ecc71; }
+  .feedback.ko { color: #e74c3c; }
+  .score {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-bottom: 12px;
+  }
+  .score strong { color: #2c3e50; font-size: 18px; display: block; }
+
+  /* Recherche de mots inconnus */
+  .lookup {
+    background: #eef6fc;
+    border: 2px solid #d6e9f8;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 15px;
+  }
+  .lookup h2 { margin: 0 0 10px; font-size: 16px; color: #2c3e50; }
+  .lookup-row {
+    display: grid;
+    grid-template-columns: 1fr 110px auto;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .res-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+  .res-row button { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+  .res-title { font-size: 13px; color: #7f8c8d; margin: 4px 0 8px; }
+  .def {
+    background: white;
+    border-left: 4px solid #3498db;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .def em { color: #7f8c8d; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    font-size: 14px;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .inputs { grid-template-columns: 1fr; }
+    .lookup-row { grid-template-columns: 1fr 1fr; }
+    .lookup-row input { grid-column: 1 / -1; }
+    .question { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📖 Mon Dictionnaire FR-EN</h1>
+
+  <div class="inputs">
+    <input type="text" id="fr" placeholder="🇫🇷 Français..." autocomplete="off">
+    <input type="text" id="en" placeholder="🇬🇧 Anglais..." autocomplete="off">
+  </div>
+
+  <div class="btns">
+    <button class="add" onclick="ajouter()">➕ Ajouter</button>
+    <button class="del" onclick="supprimer()">🗑️ Supprimer</button>
+    <button class="exp" onclick="exporter()">⬇️ Exporter</button>
+    <button class="exp" style="background:#d35400" onclick="document.getElementById('file').click()">⬆️ Importer</button>
+    <button class="quiz" onclick="toggleQuiz()">🎯 Quiz</button>
+    <input type="file" id="file" accept=".csv" style="display:none" onchange="importer(event)">
+  </div>
+
+  <!-- Recherche d'un mot inconnu -->
+  <div class="lookup">
+    <h2>🔍 Mot inconnu ? Cherche-le et garde-le</h2>
+    <div class="lookup-row">
+      <input type="text" id="cherche" placeholder="Tape un mot..." autocomplete="off">
+      <select id="sens">
+        <option value="en|fr">EN → FR</option>
+        <option value="fr|en">FR → EN</option>
+      </select>
+      <button class="quiz" onclick="chercher()">Chercher</button>
+    </div>
+    <div id="resultats"></div>
+  </div>
+
+  <div class="search">
+    <input type="text" id="recherche" placeholder="🔎 Rechercher un mot..." oninput="afficher()">
+  </div>
+
+  <div class="count" id="count"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:8%">⭐</th>
+        <th style="width:40%">Français</th>
+        <th style="width:40%">Anglais</th>
+        <th style="width:12%"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <!-- Quiz -->
+  <div class="quiz-box" id="quizBox">
+    <div class="score">
+      <div><span>Score</span><strong id="score">0</strong></div>
+      <div><span>Questions</span><strong id="total">0</strong></div>
+    </div>
+    <div class="question" id="question">...</div>
+    <input type="text" class="quiz-input" id="reponse" placeholder="Ta réponse..." autocomplete="off">
+    <div class="feedback" id="feedback"></div>
+    <div class="btns" style="justify-content:center">
+      <button class="quiz" onclick="valider()">✔️ Valider</button>
+      <button class="del" onclick="passer()">⏭️ Passer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Liste de départ (modifiable) ----------
+const DEPART = [
+  ["S'intégrer","Fit in with"],["Précipitation","Rush"],["Alors que","Just as"],
+  ["Indice","Clue"],["Même","Even"],["Jurer","Swear"],["Bizarre","Weird"],
+  ["Maintenir","Maintain"],["Interne","Internal"],["Étrange","Odd"],
+  ["Désordre","Mess"],["Maladroit","Clumsy"],["À part","Aside from"],
+  ["Réclamer","Claim"],["Traiter","Treat"],["En avant","Ahead"],
+  ["Lutter","Struggle"],["Seul","Alone"],["Suspendre","Suspend"],
+  ["Réellement","Truly"],["Se désintégrer","Fall apart"],["Étonné","Surprised"],
+  ["Sinueux","Winding"],["Panique","Panic"],["Réfléchir à","Think through"],
+  ["Lampe de poche","Flashlight"],["Squelette","Skeleton"],["Cheminée","Chimney"],
+  ["Travailler à","Work at"],["Pas","Footstep"],["Hanté","Haunted"],
+  ["Fermement","Tight"],["Allée","Driveway"],["Sans parler de","Not to mention"],
+  ["Déterminé","Determined"],["Éducation","Education"],["Économies","Savings"],
+  ["Dette","Debt"],["Pompier","Firefighter"],["Sans fin","Endless"],
+  ["Ruine","Ruin"],["Se refroidir","Cool down"],["Barman","Bartender"],
+  ["Bientôt","Soon"],["Piège","Trap"],["En larmes","In tears"],
+  ["Scandaleux","Outrageous"],["Franchement","Frankly"],["Sans cesse","Constantly"],
+  ["Par conséquent","Therefore"],["Misérable","Miserable"],["Au fond","Deep down"],
+  ["Refléter","Reflect"],["Apparaître","Appear"],["Allocation","Allowance"],
+  ["Compter sur","Rely on"],["Productif","Productive"],["À la suite de","As a result of"],
+  ["Accro à","Hooked on"],["Tromper","Deceive"],["Simplement","Simply"],
+  ["Irrité","Irritated"],["Pratiquement","Pretty much"],["Un peu","Sort of"],
+  ["Méchant","Villain"],["Un type","A guy"],["De toute façon","Anyhow"],
+  ["Cimetière","Cemetery"],["Un peu comme","A bit like"],["Orphelin","Orphan"],
+  ["En surface","On the surface"],["Affaire","Affair"],["Trucmuche","What's-his-name"],
+  ["Menacer","Threaten"],["Cupide","Greedy"]
+];
+
+// ---------- Sauvegarde ----------
+const KEY = "dico_simple_v1";
+
+function charger() {
+  const d = localStorage.getItem(KEY);
+  if (!d) {
+    const l = DEPART.map(([fr, en]) => ({ fr, en, fav: false }));
+    localStorage.setItem(KEY, JSON.stringify(l));
+    return l;
+  }
+  return JSON.parse(d);
+}
+function sauver() {
+  localStorage.setItem(KEY, JSON.stringify(mots));
+}
+
+let mots = charger();
+
+// ---------- Affichage ----------
+// Les lignes sont construites avec le DOM (textContent + écouteurs) :
+// plus de problème avec les guillemets, et le HTML importé n'est jamais interprété.
+function afficher() {
+  const q = document.getElementById("recherche").value.toLowerCase();
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+
+  const filtres = mots
+    .filter(m => m.fr.toLowerCase().includes(q) || m.en.toLowerCase().includes(q))
+    .sort((a, b) => a.fr.localeCompare(b.fr, "fr"));
+
+  if (!filtres.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.style.cssText = "text-align:center;color:#999;padding:20px";
+    td.textContent = "Aucun mot";
+    tr.appendChild(td);
+    tb.appendChild(tr);
+  } else {
+    filtres.forEach(m => {
+      const tr = document.createElement("tr");
+
+      const tdStar = document.createElement("td");
+      const star = document.createElement("span");
+      star.className = "star " + (m.fav ? "on" : "off");
+      star.textContent = m.fav ? "★" : "☆";
+      star.addEventListener("click", () => toggleFav(m.fr));
+      tdStar.appendChild(star);
+
+      const tdFr = document.createElement("td");
+      tdFr.style.cursor = "pointer";
+      tdFr.textContent = m.fr;
+      tdFr.addEventListener("click", () => remplir(m.fr, m.en));
+
+      const tdEn = document.createElement("td");
+      tdEn.style.cursor = "pointer";
+      tdEn.textContent = m.en;
+      tdEn.addEventListener("click", () => remplir(m.fr, m.en));
+
+      const tdAct = document.createElement("td");
+      tdAct.style.textAlign = "center";
+      const bSpeak = document.createElement("button");
+      bSpeak.className = "speak";
+      bSpeak.textContent = "🔊";
+      bSpeak.addEventListener("click", () => dire(m.en));
+      const bDel = document.createElement("button");
+      bDel.className = "del";
+      bDel.style.cssText = "padding:4px 8px;font-size:12px";
+      bDel.textContent = "✕";
+      bDel.addEventListener("click", () => supprimerLigne(m.fr));
+      tdAct.appendChild(bSpeak);
+      tdAct.appendChild(bDel);
+
+      tr.append(tdStar, tdFr, tdEn, tdAct);
+      tb.appendChild(tr);
+    });
+  }
+  document.getElementById("count").textContent = filtres.length + " / " + mots.length + " mot(s)";
+}
+
+// ---------- Actions ----------
+function ajouter() {
+  const fr = document.getElementById("fr").value.trim();
+  const en = document.getElementById("en").value.trim();
+  if (!fr || !en) return toast("Remplis les deux champs");
+  if (mots.some(m => m.fr.toLowerCase() === fr.toLowerCase())) return toast("Ce mot existe déjà");
+  mots.push({ fr, en, fav: false });
+  sauver();
+  document.getElementById("fr").value = "";
+  document.getElementById("en").value = "";
+  afficher();
+  toast("Ajouté ✓");
+}
+
+function supprimer() {
+  const fr = document.getElementById("fr").value.trim();
+  if (!fr) return toast("Saisis un mot");
+  const i = mots.findIndex(m => m.fr.toLowerCase() === fr.toLowerCase());
+  if (i === -1) return toast("Introuvable");
+  mots.splice(i, 1);
+  sauver();
+  document.getElementById("fr").value = "";
+  document.getElementById("en").value = "";
+  afficher();
+  toast("Supprimé ✓");
+}
+
+function supprimerLigne(fr) {
+  mots = mots.filter(m => m.fr !== fr);
+  sauver();
+  afficher();
+  toast("Supprimé ✓");
+}
+
+function toggleFav(fr) {
+  const m = mots.find(x => x.fr === fr);
+  if (!m) return;
+  m.fav = !m.fav;
+  sauver();
+  afficher();
+}
+
+function remplir(fr, en) {
+  document.getElementById("fr").value = fr;
+  document.getElementById("en").value = en;
+}
+
+// ---------- Export / Import ----------
+function exporter() {
+  const l = [["Français","Anglais","Favori"], ...mots.map(m => [m.fr, m.en, m.fav ? "1" : "0"])];
+  const csv = l.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "dictionnaire.csv";
+  a.click();
+  toast("Exporté ✓");
+}
+
+function importer(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const lignes = ev.target.result.split("\n").slice(1);
+    let n = 0;
+    lignes.forEach(x => {
+      const m = x.match(/"([^"]*)","([^"]*)"(?:,"([^"]*)")?/);
+      if (m) {
+        const fr = m[1].trim(), en = m[2].trim(), fav = m[3] === "1";
+        if (fr && en && !mots.some(z => z.fr.toLowerCase() === fr.toLowerCase())) {
+          mots.push({ fr, en, fav });
+          n++;
+        }
+      }
+    });
+    sauver();
+    afficher();
+    toast(n + " mot(s) importé(s)");
+    e.target.value = "";
+  };
+  r.readAsText(f);
+}
+
+// ---------- Audio ----------
+function dire(txt) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = "en-US";
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+}
+
+// ---------- Quiz ----------
+let quizScore = 0, quizTotal = 0, motActuel = null, bonneRep = "", actif = false;
+
+function toggleQuiz() {
+  const b = document.getElementById("quizBox");
+  b.classList.toggle("on");
+  if (b.classList.contains("on")) {
+    nouvelleQuestion();
+    document.getElementById("reponse").focus();
+  } else {
+    actif = false;
+  }
+}
+
+function nouvelleQuestion() {
+  if (!mots.length) {
+    document.getElementById("question").textContent = "Aucun mot";
+    return;
+  }
+  motActuel = mots[Math.floor(Math.random() * mots.length)];
+  // 50% FR→EN, 50% EN→FR
+  const sens = Math.random() < 0.5;
+  if (sens) {
+    document.getElementById("question").textContent = motActuel.fr;
+    bonneRep = motActuel.en;
+  } else {
+    document.getElementById("question").textContent = motActuel.en;
+    bonneRep = motActuel.fr;
+  }
+  const inp = document.getElementById("reponse");
+  inp.value = "";
+  inp.className = "quiz-input";
+  inp.style.borderColor = ""; // correction : on enlève la bordure verte/rouge
+  inp.focus();
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("feedback").className = "feedback";
+  actif = true;
+}
+
+function normaliser(t) {
+  return t.trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,!?;:]/g, "").replace(/\s+/g, " ");
+}
+
+function valider() {
+  if (!actif) return;
+  const r = document.getElementById("reponse").value;
+  if (!r.trim()) return;
+  actif = false;
+  quizTotal++;
+  const inp = document.getElementById("reponse");
+  const fb = document.getElementById("feedback");
+
+  if (normaliser(r) === normaliser(bonneRep)) {
+    quizScore++;
+    inp.style.borderColor = "#2ecc71";
+    fb.textContent = "✅ Correct !";
+    fb.className = "feedback ok";
+    majScore();
+    setTimeout(nouvelleQuestion, 800);
+  } else {
+    inp.style.borderColor = "#e74c3c";
+    fb.textContent = "❌ Réponse : " + bonneRep;
+    fb.className = "feedback ko";
+    majScore();
+    setTimeout(nouvelleQuestion, 1800);
+  }
+}
+
+function passer() {
+  if (!actif) return;
+  actif = false;
+  quizTotal++;
+  document.getElementById("feedback").textContent = "⏭️ Réponse : " + bonneRep;
+  document.getElementById("feedback").className = "feedback ko";
+  majScore();
+  setTimeout(nouvelleQuestion, 1200);
+}
+
+function majScore() {
+  document.getElementById("score").textContent = quizScore;
+  document.getElementById("total").textContent = quizTotal;
+}
+
+// ---------- Recherche de mots inconnus ----------
+// Traductions : API gratuite MyMemory. Définitions anglaises : dictionaryapi.dev.
+// Il faut une connexion internet pour chercher ; les mots gardés restent disponibles hors-ligne.
+function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+function garder(fr, en) {
+  fr = cap(fr.trim());
+  en = cap(en.trim());
+  if (!fr || !en) return;
+  if (mots.some(m => m.fr.toLowerCase() === fr.toLowerCase())) return toast("Ce mot existe déjà");
+  mots.push({ fr, en, fav: false });
+  sauver();
+  afficher();
+  toast("Gardé ✓");
+}
+
+// ---------- Dictionnaire hors-ligne (utilisé si internet ne marche pas) ----------
+// Format : anglais=français/autre sens   (une ligne par mot, tu peux en ajouter)
+const DICO_TXT = `
+abandon=abandonner
+accept=accepter
+achieve=réaliser/atteindre
+add=ajouter
+admit=admettre/avouer
+afford=se permettre
+agree=être d'accord
+allow=permettre
+announce=annoncer
+apologize=s'excuser
+appear=apparaître/sembler
+apply=postuler/appliquer
+arrange=organiser/arranger
+arrest=arrêter
+arrive=arriver
+ask=demander
+attack=attaquer
+attempt=tenter
+avoid=éviter
+bake=cuire au four
+beat=battre
+become=devenir
+begin=commencer
+behave=se comporter
+believe=croire
+belong=appartenir
+bend=plier
+bet=parier
+bite=mordre
+blame=reprocher/blâmer
+bleed=saigner
+blow=souffler
+borrow=emprunter
+bother=déranger
+break=casser
+breathe=respirer
+bring=apporter
+build=construire
+burn=brûler
+bury=enterrer
+buy=acheter
+call=appeler
+carry=porter
+catch=attraper
+cause=causer
+challenge=défier
+change=changer
+chase=poursuivre
+cheat=tricher
+check=vérifier
+choose=choisir
+climb=grimper
+close=fermer
+collect=collectionner/ramasser
+command=ordonner
+compare=comparer
+complain=se plaindre
+complete=terminer
+connect=relier/connecter
+consider=considérer
+continue=continuer
+cook=cuisiner
+copy=copier
+cost=coûter
+cough=tousser
+count=compter
+cover=couvrir
+crash=s'écraser
+create=créer
+cross=traverser
+cry=pleurer
+cut=couper
+dare=oser
+deal with=s'occuper de
+decide=décider
+deliver=livrer
+deny=nier
+depend on=dépendre de
+describe=décrire
+deserve=mériter
+destroy=détruire
+develop=développer
+die=mourir
+dig=creuser
+disappear=disparaître
+discover=découvrir
+discuss=discuter de
+divide=diviser
+doubt=douter
+drag=traîner
+dream=rêver
+dress=habiller
+drink=boire
+drive=conduire
+drop=laisser tomber
+earn=gagner de l'argent
+eat=manger
+enjoy=apprécier
+enter=entrer
+escape=s'échapper
+expect=s'attendre à
+explain=expliquer
+explore=explorer
+face=affronter
+fail=échouer
+fall=tomber
+fear=craindre
+feed=nourrir
+feel=ressentir
+fight=se battre
+fill=remplir
+find=trouver
+finish=finir
+fix=réparer
+float=flotter
+fly=voler
+fold=plier
+follow=suivre
+forbid=interdire
+force=forcer
+forget=oublier
+forgive=pardonner
+freeze=geler
+gain=obtenir/gagner
+gather=rassembler
+get=obtenir
+give=donner
+give up=abandonner
+go=aller
+grab=saisir
+grow=grandir/cultiver
+guess=deviner
+handle=gérer
+hang=suspendre/accrocher
+happen=se produire/arriver
+hate=détester
+heal=guérir
+hear=entendre
+help=aider
+hide=cacher
+hit=frapper
+hold=tenir
+hope=espérer
+hunt=chasser
+hurry=se dépêcher
+hurt=blesser/faire mal
+ignore=ignorer
+imagine=imaginer
+improve=améliorer
+include=inclure
+insist=insister
+invent=inventer
+invite=inviter
+join=rejoindre
+jump=sauter
+keep=garder
+kick=donner un coup de pied
+kill=tuer
+kiss=embrasser
+knock=frapper à la porte
+know=savoir/connaître
+land=atterrir
+last=durer
+laugh=rire
+lead=mener
+lean=se pencher
+learn=apprendre
+leave=partir/quitter
+lend=prêter
+lie=mentir
+lift=soulever
+like=aimer
+listen=écouter
+live=vivre
+look=regarder
+look for=chercher
+look after=s'occuper de
+lose=perdre
+love=aimer
+manage=réussir à/gérer
+mark=marquer
+marry=épouser
+matter=importer
+mean=signifier/vouloir dire
+measure=mesurer
+meet=rencontrer
+melt=fondre
+mention=mentionner
+miss=manquer
+mix=mélanger
+move=déplacer/bouger
+need=avoir besoin de
+notice=remarquer
+obey=obéir
+offer=offrir/proposer
+open=ouvrir
+order=commander
+own=posséder
+pack=emballer/faire ses valises
+pass=passer
+pay=payer
+perform=accomplir/interpréter
+pick=choisir/cueillir
+pick up=ramasser
+plan=planifier
+play=jouer
+point=pointer
+pour=verser
+practice=pratiquer
+prefer=préférer
+prepare=préparer
+pretend=faire semblant
+prevent=empêcher
+promise=promettre
+protect=protéger
+prove=prouver
+pull=tirer
+push=pousser
+put=mettre
+quit=arrêter/quitter
+reach=atteindre
+realize=se rendre compte
+receive=recevoir
+recognize=reconnaître
+refuse=refuser
+regret=regretter
+relax=se détendre
+remain=rester
+remember=se souvenir
+remind=rappeler à
+remove=retirer
+repair=réparer
+repeat=répéter
+reply=répondre
+rescue=sauver
+rest=se reposer
+return=revenir/rendre
+ride=monter à cheval ou à vélo
+ring=sonner
+rise=se lever/augmenter
+roll=rouler
+rule=gouverner
+run=courir
+rush=se précipiter
+save=sauver/économiser
+say=dire
+search=chercher
+see=voir
+seem=sembler
+sell=vendre
+send=envoyer
+separate=séparer
+serve=servir
+set=poser/régler
+settle=s'installer/régler
+shake=secouer
+share=partager
+shine=briller
+shoot=tirer
+shout=crier
+show=montrer
+shut=fermer
+sing=chanter
+sink=couler
+sit=s'asseoir
+sleep=dormir
+slip=glisser
+smell=sentir
+smile=sourire
+solve=résoudre
+sort=trier
+sound=sembler/sonner
+speak=parler
+spend=dépenser/passer du temps
+spill=renverser
+spread=répandre
+stand=se tenir debout
+stare=fixer du regard
+start=commencer
+stay=rester
+steal=voler/dérober
+stick=coller
+stop=arrêter
+study=étudier
+succeed=réussir
+suffer=souffrir
+suggest=suggérer
+support=soutenir
+suppose=supposer
+surprise=surprendre
+survive=survivre
+suspect=soupçonner
+swallow=avaler
+swim=nager
+switch=changer/basculer
+take=prendre
+talk=parler
+taste=goûter
+teach=enseigner
+tear=déchirer
+tell=dire/raconter
+tend=avoir tendance à
+test=tester
+thank=remercier
+think=penser
+throw=jeter/lancer
+tie=attacher
+touch=toucher
+trade=échanger/commercer
+train=s'entraîner
+travel=voyager
+trust=faire confiance
+try=essayer
+turn=tourner
+understand=comprendre
+use=utiliser
+visit=visiter
+wait=attendre
+wake up=se réveiller
+walk=marcher
+want=vouloir
+warn=avertir
+wash=laver
+waste=gaspiller
+watch=regarder
+wear=porter un vêtement
+weigh=peser
+win=gagner
+wish=souhaiter
+wonder=se demander
+work=travailler
+worry=s'inquiéter
+wrap=envelopper
+write=écrire
+advice=conseil
+anger=colère
+answer=réponse
+area=zone
+baby=bébé
+bargain=bonne affaire
+battle=bataille
+beach=plage
+beauty=beauté
+benefit=avantage
+border=frontière
+bottom=fond/bas
+brain=cerveau
+breath=souffle
+bridge=pont
+brother=frère
+budget=budget
+burden=fardeau
+business=entreprise
+chance=chance/occasion
+chief=chef
+childhood=enfance
+choice=choix
+coast=côte
+coin=pièce de monnaie
+courage=courage
+crowd=foule
+custom=coutume
+damage=dégâts
+danger=danger
+darkness=obscurité
+deadline=date limite
+deal=accord
+death=mort
+decision=décision
+degree=degré/diplôme
+delay=retard
+destiny=destin
+diet=régime
+difference=différence
+direction=direction
+disease=maladie
+distance=distance
+effort=effort
+employee=employé
+enemy=ennemi
+engine=moteur
+environment=environnement
+error=erreur
+event=événement
+evidence=preuve
+exam=examen
+experience=expérience
+fact=fait
+failure=échec
+fault=faute
+fate=sort
+feeling=sentiment
+fence=clôture
+field=champ
+flavor=saveur
+flood=inondation
+fog=brouillard
+foreign=étranger
+forest=forêt
+fortune=fortune
+freedom=liberté
+friendship=amitié
+furniture=meubles
+future=futur
+garden=jardin
+goal=but/objectif
+government=gouvernement
+guest=invité
+guilt=culpabilité
+habit=habitude
+harbor=port
+harvest=récolte
+health=santé
+height=hauteur
+hero=héros
+history=histoire
+holiday=vacances
+hunger=faim
+identity=identité
+image=image
+income=revenu
+injury=blessure
+insect=insecte
+island=île
+journey=voyage
+judge=juge
+justice=justice
+kindness=gentillesse
+knowledge=connaissance
+lack=manque
+language=langue
+law=loi
+lawyer=avocat
+leader=chef/dirigeant
+lesson=leçon
+level=niveau
+limit=limite
+loan=prêt
+luck=chance
+manner=manière
+meaning=signification
+memory=souvenir/mémoire
+mind=esprit
+mirror=miroir
+mistake=erreur
+moment=moment
+mood=humeur
+mountain=montagne
+neighbor=voisin
+news=nouvelles
+noise=bruit
+nurse=infirmier
+ocean=océan
+opinion=avis
+opportunity=opportunité
+pain=douleur
+path=chemin
+patience=patience
+peace=paix
+pity=pitié
+planet=planète
+pleasure=plaisir
+poison=poison
+power=pouvoir
+prayer=prière
+pressure=pression
+pride=fierté
+prison=prison
+proof=preuve
+purpose=but/objectif
+quality=qualité
+quarrel=dispute
+rain=pluie
+reason=raison
+relief=soulagement
+reward=récompense
+risk=risque
+river=rivière
+role=rôle
+rumor=rumeur
+sadness=tristesse
+safety=sécurité
+salary=salaire
+scene=scène
+secret=secret
+shame=honte
+shadow=ombre
+shelter=abri
+shore=rivage
+sign=signe
+silence=silence
+skill=compétence
+slope=pente
+society=société
+soul=âme
+speech=discours
+speed=vitesse
+spirit=esprit
+stage=étape/scène
+storm=tempête
+strength=force
+stress=stress
+success=succès
+surface=surface
+talent=talent
+task=tâche
+thought=pensée
+threat=menace
+tool=outil
+trouble=ennui/problème
+truth=vérité
+view=vue
+voice=voix
+wealth=richesse
+weapon=arme
+weather=météo/temps
+wisdom=sagesse
+worth=valeur
+afraid=effrayé
+ancient=ancien
+angry=en colère
+anxious=anxieux
+awful=affreux
+aware=conscient
+bare=nu
+blind=aveugle
+bold=audacieux
+brave=courageux
+brief=bref
+bright=brillant/lumineux
+calm=calme
+careful=prudent
+careless=négligent
+cheap=bon marché
+clever=intelligent/malin
+common=commun
+crazy=fou
+cruel=cruel
+curious=curieux
+dangerous=dangereux
+deaf=sourd
+deep=profond
+delicate=délicat
+difficult=difficile
+dirty=sale
+dizzy=étourdi
+dull=ennuyeux/terne
+eager=impatient/désireux
+empty=vide
+enormous=énorme
+equal=égal
+exhausted=épuisé
+fair=juste
+faithful=fidèle
+false=faux
+fancy=chic/sophistiqué
+fierce=féroce
+flat=plat
+foolish=idiot/insensé
+fragile=fragile
+frightened=effrayé
+generous=généreux
+gentle=doux
+glad=content
+gloomy=sombre
+grumpy=grincheux
+guilty=coupable
+handsome=beau
+harmless=inoffensif
+harsh=dur/sévère
+heavy=lourd
+helpful=serviable
+helpless=impuissant
+hidden=caché
+honest=honnête
+horrible=horrible
+huge=immense
+humble=humble
+hungry=affamé
+jealous=jaloux
+kind=gentil
+lazy=paresseux
+lonely=solitaire/seul
+loose=lâche/desserré
+loud=bruyant/fort
+lucky=chanceux
+mad=fou/en colère
+mean=méchant/radin
+messy=en désordre
+mild=doux/léger
+narrow=étroit
+naughty=vilain
+nervous=nerveux
+noisy=bruyant
+obvious=évident
+polite=poli
+poor=pauvre
+powerful=puissant
+proud=fier
+pure=pur
+quiet=calme/tranquille
+rare=rare
+ready=prêt
+rich=riche
+rough=rugueux/rude
+rude=impoli
+sad=triste
+safe=sûr
+scared=effrayé
+selfish=égoïste
+sensible=raisonnable
+serious=sérieux
+sharp=tranchant/aiguisé
+shy=timide
+sick=malade
+silly=idiot
+slim=mince
+slippery=glissant
+smooth=lisse
+soft=doux/mou
+sore=douloureux
+sour=aigre
+spare=de rechange
+strict=strict
+stubborn=têtu
+sudden=soudain
+tender=tendre
+thick=épais
+thin=mince/fin
+tiny=minuscule
+tough=dur/résistant
+ugly=laid
+unusual=inhabituel
+upset=contrarié
+useful=utile
+useless=inutile
+vague=vague
+wild=sauvage
+wise=sage
+wooden=en bois
+worried=inquiet
+wrong=faux/incorrect
+although=bien que
+anyway=de toute façon
+apart=à part/séparé
+barely=à peine
+besides=d'ailleurs/en plus
+despite=malgré
+either=l'un ou l'autre/non plus
+elsewhere=ailleurs
+enough=assez
+however=cependant
+indeed=en effet
+instead=à la place
+meanwhile=pendant ce temps
+nearly=presque
+otherwise=sinon
+perhaps=peut-être
+rather=plutôt
+seldom=rarement
+somehow=d'une manière ou d'une autre
+thus=ainsi
+unless=à moins que
+whereas=alors que
+whether=si
+yet=pourtant/encore
+wherever=partout où
+whenever=chaque fois que
+whatever=peu importe
+sometimes=parfois
+usually=d'habitude
+suddenly=soudainement
+quite=assez/plutôt
+almost=presque
+already=déjà
+at least=au moins
+at all=du tout
+as well=aussi
+by the way=au fait
+in fact=en fait
+in order to=afin de
+on purpose=exprès
+by accident=par accident
+so far=jusqu'ici
+as soon as=dès que
+no matter=peu importe
+sooner or later=tôt ou tard
+take care of=s'occuper de
+give in=céder
+give away=donner/révéler
+look forward to=avoir hâte de
+look up=chercher dans un dictionnaire
+find out=découvrir/apprendre
+figure out=comprendre/trouver
+carry on=continuer
+come across=tomber sur
+come up with=trouver une idée
+get along=s'entendre
+get over=se remettre de
+get rid of=se débarrasser de
+go on=continuer/se passer
+hold on=attendre/tenir bon
+keep up=suivre le rythme
+let down=décevoir
+make up=inventer/se réconcilier
+pass away=décéder
+put off=reporter
+put up with=supporter
+run out of=ne plus avoir de
+set up=mettre en place
+show up=se pointer
+sort out=régler/trier
+take off=décoller/enlever
+turn out=se révéler
+turn down=refuser/baisser
+wear out=user/épuiser
+work out=s'entraîner/résoudre
+break down=tomber en panne/s'effondrer
+break up=rompre
+bring up=élever/évoquer
+call off=annuler
+cheer up=se remonter le moral
+calm down=se calmer
+fill in=remplir
+hang out=traîner
+`;
+
+const DICO_OFF = DICO_TXT.split("\n")
+  .map(l => l.trim())
+  .filter(l => l.includes("="))
+  .map(l => {
+    const i = l.indexOf("=");
+    return { en: l.slice(0, i).trim(), fr: l.slice(i + 1).split("/").map(s => s.trim()).filter(Boolean) };
+  })
+  .filter(e => e.en && e.fr.length);
+
+function normCle(t) {
+  return t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Affiche les résultats du dictionnaire intégré. Renvoie false si rien n'est trouvé.
+function afficherHorsLigne(q, sens, out) {
+  const src = sens.split("|")[0];
+  const k = normCle(q);
+  const exacts = [], proches = [];
+  DICO_OFF.forEach(e => {
+    const cles = src === "en" ? [normCle(e.en)] : e.fr.map(normCle);
+    if (cles.includes(k)) exacts.push(e);
+    else if (k.length >= 2 && cles.some(c => c.startsWith(k))) proches.push(e);
+  });
+
+  const lignes = [];
+  exacts.concat(proches).forEach(e => e.fr.forEach(f => lignes.push({ en: e.en, fr: f })));
+  const liste = lignes.slice(0, 8);
+  if (!liste.length) return false;
+
+  out.innerHTML = "";
+  const titre = document.createElement("div");
+  titre.className = "res-title";
+  titre.textContent = "Dictionnaire hors-ligne — résultats pour « " + q + " »";
+  out.appendChild(titre);
+
+  liste.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "res-row";
+    const txt = document.createElement("span");
+    txt.textContent = p.en + " → " + p.fr;
+    const b = document.createElement("button");
+    b.className = "add";
+    b.textContent = "➕ Garder";
+    b.addEventListener("click", () => garder(p.fr, p.en));
+    row.append(txt, b);
+    out.appendChild(row);
+  });
+  return true;
+}
+
+async function chercher() {
+  const q = document.getElementById("cherche").value.trim();
+  const sens = document.getElementById("sens").value; // "en|fr" ou "fr|en"
+  const out = document.getElementById("resultats");
+  if (!q) return toast("Tape un mot à chercher");
+  out.textContent = "Recherche…";
+
+  try {
+    const r = await fetch("https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(q) + "&langpair=" + encodeURIComponent(sens));
+    const d = await r.json();
+
+    const vus = new Set([q.toLowerCase()]);
+    const cands = [];
+    const ajoutCand = t => {
+      t = (t || "").trim();
+      const k = t.toLowerCase();
+      if (!t || vus.has(k) || t.length > 60 || /MYMEMORY WARNING/i.test(t)) return;
+      vus.add(k);
+      cands.push(t);
+    };
+    ajoutCand(d.responseData && d.responseData.translatedText);
+    (d.matches || [])
+      .slice()
+      .sort((a, b) => (b.match || 0) - (a.match || 0))
+      .forEach(m => ajoutCand(m.translation));
+    const top = cands.slice(0, 5);
+
+    out.innerHTML = "";
+    if (!top.length) {
+      if (!afficherHorsLigne(q, sens, out)) out.textContent = "Aucun résultat pour « " + q + " ».";
+      return;
+    }
+
+    const titre = document.createElement("div");
+    titre.className = "res-title";
+    titre.textContent = "Traductions proposées pour « " + q + " »";
+    out.appendChild(titre);
+
+    const [src] = sens.split("|");
+    top.forEach(c => {
+      const row = document.createElement("div");
+      row.className = "res-row";
+      const txt = document.createElement("span");
+      txt.textContent = c;
+      const b = document.createElement("button");
+      b.className = "add";
+      b.textContent = "➕ Garder";
+      b.addEventListener("click", () => {
+        if (src === "en") garder(c, q);   // q = anglais, c = français
+        else garder(q, c);                // q = français, c = anglais
+      });
+      row.append(txt, b);
+      out.appendChild(row);
+    });
+
+    // Définition anglaise du mot (la requête si EN→FR, sinon la 1re traduction)
+    const motEn = src === "en" ? q : top[0];
+    if (/^[A-Za-z'-]+$/.test(motEn)) afficherDefinition(motEn, out);
+  } catch (e) {
+    if (!afficherHorsLigne(q, sens, out)) {
+      out.textContent = "Recherche en ligne impossible et mot absent du dictionnaire hors-ligne. Tu peux l'ajouter à la main avec les deux champs du haut.";
+    }
+  }
+}
+
+async function afficherDefinition(mot, conteneur) {
+  try {
+    const r = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(mot));
+    if (!r.ok) return;
+    const d = await r.json();
+    const sens = d[0] && d[0].meanings && d[0].meanings[0];
+    const def = sens && sens.definitions && sens.definitions[0];
+    if (!def) return;
+    const box = document.createElement("div");
+    box.className = "def";
+    const nom = document.createElement("strong");
+    nom.textContent = mot + (sens.partOfSpeech ? " (" + sens.partOfSpeech + ")" : "");
+    box.appendChild(nom);
+    box.appendChild(document.createElement("br"));
+    box.appendChild(document.createTextNode(def.definition));
+    if (def.example) {
+      box.appendChild(document.createElement("br"));
+      const ex = document.createElement("em");
+      ex.textContent = "Ex : " + def.example;
+      box.appendChild(ex);
+    }
+    conteneur.appendChild(box);
+  } catch (e) { /* pas de définition : on ignore */ }
+}
+
+// ---------- Toast ----------
+function toast(m) {
+  const t = document.getElementById("toast");
+  t.textContent = m;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// ---------- Entrées clavier ----------
+document.getElementById("fr").addEventListener("keypress", e => { if (e.key === "Enter") document.getElementById("en").focus(); });
+document.getElementById("en").addEventListener("keypress", e => { if (e.key === "Enter") ajouter(); });
+document.getElementById("reponse").addEventListener("keypres7s", e => { if (e.key === "Enter") valider(); });
+document.getElementById("cherche").addEventListener("keypress", e => { if (e.key === "Enter") chercher(); });
+
+// ---------- Init ----------
+afficher();
+</script>
+</body>
+</html>
